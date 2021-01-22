@@ -1,5 +1,5 @@
 class Move
-  VALUES = ["rock", "paper", "scissors"]
+  VALUES = ["rock", "paper", "scissors", "spock", "lizard"]
 
   def initialize(value)
     @value = value
@@ -17,16 +17,38 @@ class Move
     @value == "paper"
   end
 
+  def spock?
+    @value == "spock"
+  end
+
+  def lizard?
+    @value == "lizard"
+  end
+
   def >(other_move)
     (rock? && other_move.scissors?) ||
+      (rock? && other_move.lizard?) ||
       (paper? && other_move.rock?) ||
-      (scissors? && other_move.paper?)
+      (paper? && other_move.spock?) ||
+      (scissors? && other_move.paper?) ||
+      (scissors? && other_move.lizard?) ||
+      (spock? && other_move.rock?) ||
+      (spock? && other_move.scissors?) ||
+      (lizard? && other_move.paper?) ||
+      (lizard? && other_move.spock?)
   end
 
   def <(other_move)
     (rock? && other_move.paper?) ||
+      (rock? && other_move.spock?) ||
       (paper? && other_move.scissors?) ||
-      (scissors? && other_move.rock?)
+      (paper? && other_move.lizard?) ||
+      (scissors? && other_move.rock?) ||
+      (scissors? && other_move.spock?) ||
+      (spock? && other_move.paper?) ||
+      (spock? && other_move.lizard?) ||
+      (lizard? && other_move.rock?) ||
+      (lizard? && other_move.scissors?)
   end
 
   def to_s
@@ -35,11 +57,13 @@ class Move
 end
 
 class Player
-  attr_accessor :move, :name
+  attr_accessor :move, :name, :score
 
   def initialize
     set_name
+    @score = 0
   end
+
 end
 
 class Human < Player
@@ -57,7 +81,7 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose rock, paper, or scissors:"
+      puts "Please choose rock, paper, scissors, lizard or spock:"
       choice = gets.chomp
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice"
@@ -68,7 +92,7 @@ end
 
 class Computer < Player
   def set_name
-    self.name = ["R2D2", "Hal", "Chappie", "Sonny", "Number 5"].sample
+    self.name = ["R2D2", "Hal", "Chappie", "Bender", "XJ9"].sample
   end
 
   def choose
@@ -77,6 +101,7 @@ class Computer < Player
 end
 
 class RPSGame
+  WINNING_SCORE = 5
   attr_accessor :human, :computer
 
   def initialize
@@ -85,11 +110,11 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors!"
+    puts "Welcome to Rock, Paper, Scissors, Lizard, Spock!"
   end
 
   def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
+    puts "Thanks for playing Rock, Paper, Scissors, Lizard, Spock. Good bye!"
   end
 
   def display_moves
@@ -99,11 +124,31 @@ class RPSGame
 
   def display_winner
     if human.move > computer.move
+      human.score += 1
       puts "#{human.name} won!"
     elsif human.move < computer.move
+      computer.score += 1
       puts "#{computer.name} won!"
     else
       puts "It's a tie!"
+    end
+  end
+
+  def reset_score
+    human.score = 0
+    computer.score = 0
+  end
+
+  def display_scores
+    puts "#{human.name}: #{human.score} points | " +
+         "#{computer.name}: #{computer.score} points"
+  end
+
+  def display_final_winner
+    if human.score == WINNING_SCORE
+      puts "Congrats #{human.name}, you won RPSLS!"
+    else
+      puts "Sorry, #{computer.name} won RPSLS!"
     end
   end
 
@@ -123,10 +168,16 @@ class RPSGame
   def play
     display_welcome_message
     loop do
-      human.choose
-      computer.choose
-      display_moves
-      display_winner
+      loop do
+        human.choose
+        computer.choose
+        display_moves
+        display_winner
+        display_scores
+        break if human.score == WINNING_SCORE || computer.score == WINNING_SCORE
+      end
+      display_final_winner
+      reset_score
       break unless play_again?
     end
     display_goodbye_message
