@@ -92,11 +92,12 @@ class Spock < Move
 end
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_accessor :move, :name, :score, :moves
 
   def initialize
     set_name
     @score = 0
+    @moves = []
   end
 
   def choose(choice)
@@ -108,6 +109,7 @@ class Player
       when "lizard" then Lizard.new(choice)
       when "spock" then Spock.new(choice)
       end
+    self.moves << choice
   end
 
 end
@@ -212,6 +214,16 @@ class RPSGame
     return true if answer.downcase == 'y'
   end
 
+  def display_moves_history
+    puts "Your moves: #{human.moves}"
+    puts "#{computer.name}'s moves: #{computer.moves}"
+  end
+
+  def reset_moves
+    human.moves = []
+    computer.moves = []
+  end
+
   def play
     display_welcome_message
     loop do
@@ -221,10 +233,12 @@ class RPSGame
         display_moves
         display_winner
         display_scores
+        display_moves_history
         break if human.score == WINNING_SCORE || computer.score == WINNING_SCORE
       end
       display_final_winner
       reset_score
+      reset_moves
       break unless play_again?
     end
     display_goodbye_message
