@@ -1,12 +1,13 @@
 class Move
+  attr_reader :value
   VALUES = ["rock", "paper", "scissors", "spock", "lizard"]
 
   def initialize(value)
     @value = value
   end
 
-  def scissors?
-    @value == "scissors"
+  def to_s
+    @value
   end
 
   def rock?
@@ -17,42 +18,76 @@ class Move
     @value == "paper"
   end
 
-  def spock?
-    @value == "spock"
+  def scissors?
+    @value == "scissors"
   end
 
   def lizard?
     @value == "lizard"
   end
 
+  def spock?
+    @value == "spock"
+  end
+end
+
+class Rock < Move
   def >(other_move)
     (rock? && other_move.scissors?) ||
-      (rock? && other_move.lizard?) ||
-      (paper? && other_move.rock?) ||
-      (paper? && other_move.spock?) ||
-      (scissors? && other_move.paper?) ||
-      (scissors? && other_move.lizard?) ||
-      (spock? && other_move.rock?) ||
-      (spock? && other_move.scissors?) ||
-      (lizard? && other_move.paper?) ||
-      (lizard? && other_move.spock?)
+      (rock? && other_move.lizard?)
   end
 
   def <(other_move)
     (rock? && other_move.paper?) ||
-      (rock? && other_move.spock?) ||
-      (paper? && other_move.scissors?) ||
-      (paper? && other_move.lizard?) ||
-      (scissors? && other_move.rock?) ||
-      (scissors? && other_move.spock?) ||
-      (spock? && other_move.paper?) ||
-      (spock? && other_move.lizard?) ||
-      (lizard? && other_move.rock?) ||
-      (lizard? && other_move.scissors?)
+      (rock? && other_move.spock?)
+  end
+end
+
+class Paper < Move
+  def >(other_move)
+   (paper? && other_move.rock?) ||
+     (paper? && other_move.spock?)
   end
 
-  def to_s
-    @value
+  def <(other_move)
+    (paper? && other_move.scissors?) ||
+      (paper? && other_move.lizard?)
+  end
+end
+
+class Scissors < Move
+  def >(other_move)
+    (scissors? && other_move.paper?) ||
+      (scissors? && other_move.lizard?)
+  end
+
+  def <(other_move)
+    (scissors? && other_move.rock?) ||
+      (scissors? && other_move.spock?)
+  end
+end
+
+class Lizard < Move
+  def >(other_move)
+    (lizard? && other_move.paper?) ||
+      (lizard? && other_move.spock?)
+  end
+
+  def <(other_move)
+    (lizard? && other_move.rock?) ||
+      (lizard? && other_move.scissors?)
+  end
+end
+
+class Spock < Move
+  def >(other_move)
+    (spock? && other_move.rock?) ||
+      (spock? && other_move.scissors?)
+  end
+
+  def <(other_move)
+    (spock? && other_move.paper?) ||
+      (spock? && other_move.lizard?)
   end
 end
 
@@ -62,6 +97,17 @@ class Player
   def initialize
     set_name
     @score = 0
+  end
+
+  def choose(choice)
+    self.move =
+      case choice
+      when "rock" then Rock.new(choice)
+      when "paper" then Paper.new(choice)
+      when "scissors" then Scissors.new(choice)
+      when "lizard" then Lizard.new(choice)
+      when "spock" then Spock.new(choice)
+      end
   end
 
 end
@@ -86,7 +132,7 @@ class Human < Player
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice"
     end
-    self.move = Move.new(choice)
+    super(choice)
   end
 end
 
@@ -96,7 +142,8 @@ class Computer < Player
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    choice = Move::VALUES.sample
+    super(choice)
   end
 end
 
