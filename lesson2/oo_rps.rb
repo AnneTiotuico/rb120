@@ -1,115 +1,73 @@
 class Move
-  attr_reader :value
+  attr_reader :name, :beats
+  include Comparable
   VALUES = ["rock", "paper", "scissors", "spock", "lizard"]
 
-  def initialize(value)
-    @value = value
-  end
-
   def to_s
-    @value
+    self.name.capitalize
   end
 
-  def rock?
-    @value == "rock"
-  end
-
-  def paper?
-    @value == "paper"
-  end
-
-  def scissors?
-    @value == "scissors"
-  end
-
-  def lizard?
-    @value == "lizard"
-  end
-
-  def spock?
-    @value == "spock"
+  def <=>(other_move)
+     return 1 if self.beats.include?(other_move.name)
+     return 0 if name == other_move.name
+     -1
   end
 end
 
 class Rock < Move
-  def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (rock? && other_move.lizard?)
-  end
-
-  def <(other_move)
-    (rock? && other_move.paper?) ||
-      (rock? && other_move.spock?)
+  def initialize
+    @name = "rock"
+    @beats = ["scissors", "lizard"]
   end
 end
 
 class Paper < Move
-  def >(other_move)
-   (paper? && other_move.rock?) ||
-     (paper? && other_move.spock?)
-  end
-
-  def <(other_move)
-    (paper? && other_move.scissors?) ||
-      (paper? && other_move.lizard?)
+  def initialize
+    @name = "paper"
+    @beats = ["rock", "spock"]
   end
 end
 
 class Scissors < Move
-  def >(other_move)
-    (scissors? && other_move.paper?) ||
-      (scissors? && other_move.lizard?)
-  end
-
-  def <(other_move)
-    (scissors? && other_move.rock?) ||
-      (scissors? && other_move.spock?)
+  def initialize
+    @name = "scissors"
+    @beats = ["paper", "lizard"]
   end
 end
 
 class Lizard < Move
-  def >(other_move)
-    (lizard? && other_move.paper?) ||
-      (lizard? && other_move.spock?)
-  end
-
-  def <(other_move)
-    (lizard? && other_move.rock?) ||
-      (lizard? && other_move.scissors?)
+  def initialize
+    @name = "lizard"
+    @beats = ["paper", "spock"]
   end
 end
 
 class Spock < Move
-  def >(other_move)
-    (spock? && other_move.rock?) ||
-      (spock? && other_move.scissors?)
-  end
-
-  def <(other_move)
-    (spock? && other_move.paper?) ||
-      (spock? && other_move.lizard?)
+  def initialize
+    @name = "spock"
+    @beats = ["rock", "scissors"]
   end
 end
 
 class Player
-  attr_accessor :move, :name, :score, :moves
+  attr_accessor :move, :name, :score, :move_history
 
   def initialize
     set_name
     @score = 0
-    @moves = []
+    @move_history = []
   end
 
   def choose(choice)
     self.move =
       case choice
-      when "rock" then Rock.new(choice)
-      when "paper" then Paper.new(choice)
-      when "scissors" then Scissors.new(choice)
-      when "lizard" then Lizard.new(choice)
-      when "spock" then Spock.new(choice)
+      when "rock" then Rock.new
+      when "paper" then Paper.new
+      when "scissors" then Scissors.new
+      when "lizard" then Lizard.new
+      when "spock" then Spock.new
       end
-    self.moves << choice
+    self.move_history << choice
   end
 
 end
@@ -130,7 +88,7 @@ class Human < Player
     choice = nil
     loop do
       puts "Please choose rock, paper, scissors, lizard or spock:"
-      choice = gets.chomp
+      choice = gets.chomp.downcase
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice"
     end
@@ -159,11 +117,11 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors, Lizard, Spock!"
+    puts "Hi #{human.name}! Welcome to Rock, Paper, Scissors, Lizard, Spock!"
   end
 
   def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors, Lizard, Spock. Good bye!"
+    puts "Thanks for playing Rock, Paper, Scissors, Lizard, Spock. Goodbye #{human.name}!"
   end
 
   def display_moves
@@ -215,13 +173,13 @@ class RPSGame
   end
 
   def display_moves_history
-    puts "Your moves: #{human.moves}"
-    puts "#{computer.name}'s moves: #{computer.moves}"
+    puts "Your moves: #{human.move_history}"
+    puts "#{computer.name}'s moves: #{computer.move_history}"
   end
 
   def reset_moves
-    human.moves = []
-    computer.moves = []
+    human.move_history = []
+    computer.move_history = []
   end
 
   def play
