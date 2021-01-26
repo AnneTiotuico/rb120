@@ -12,7 +12,7 @@ module Promptable
     puts <<~MSG
         ~~~~~~~~~~~~~~~~~~RULES~~~~~~~~~~~~~~~~~~
         Rock: crushes Lizard and crushes Scissors
-        Paper: covers Rock and vaporizes Rock
+        Paper: covers Rock and disproves Spock
         Scissors: cuts Paper and decapitates Lizard
         Lizard: poisons Spock and eats Paper
         Spock: smashes Scissors and vaporizes Rock
@@ -110,6 +110,7 @@ class Human < Player
   def set_name
     name = ""
     loop do
+      clear_screen
       prompt "What's your name?"
       name = gets.chomp
       break unless name.empty?
@@ -138,13 +139,54 @@ class Human < Player
 end
 
 class Computer < Player
+  attr_reader :robot, :model, :strategy
+  def initialize
+    @robot = [R2D2, Hal, Chappie, Bender, XJ9].sample.new
+    super
+  end
+
   def set_name
-    self.name = ["R2D2", "Hal", "Chappie", "Bender", "XJ9"].sample
+    self.name = robot.model
   end
 
   def choose
-    choice = Move::VALUES.sample
+    choice = robot.strategy.sample
     super(choice)
+  end
+end
+
+class R2D2 < Computer
+  def initialize
+    @model = "R2D2"
+    @strategy = ["r"]
+  end
+end
+
+class Hal < Computer
+  def initialize
+    @model = "Hal"
+    @strategy = ["sc", "sc", "sc", "r"]
+  end
+end
+
+class Chappie < Computer
+  def initialize
+    @model = "Chappie"
+    @strategy = ["l", "l", "r", "p"]
+  end
+end
+
+class Bender < Computer
+  def initialize
+    @model = "Bender"
+    @strategy = ["r", "sc", "sp", "sp"]
+  end
+end
+
+class XJ9 < Computer
+  def initialize
+    @model = "XJ9"
+    @strategy = Move::VALUES
   end
 end
 
