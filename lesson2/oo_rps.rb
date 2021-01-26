@@ -8,14 +8,27 @@ module Promptable
     system("clear") || system("cls")
   end
 
-  def rules
-    <<~MSG
-       RULES:
-            Scissors cuts Paper covers Rock crushes Lizard poisons
-            Spock smashes Scissors decapitates Lizard eats paper
-            disproves Spock vaporizes Rock crushes Scissors.
-            (Enter: 'rules' if you need a reminder while playing)
-    MSG
+  def display_rules
+    puts <<~MSG
+        ~~~~~~~~~~~~~~~~~~RULES~~~~~~~~~~~~~~~~~~
+        Rock: crushes Lizard and crushes Scissors
+        Paper: covers Rock and vaporizes Rock
+        Scissors: cuts Paper and decapitates Lizard
+        Lizard: poisons Spock and eats Paper
+        Spock: smashes Scissors and vaporizes Rock
+        (Enter: 'rules' if you need a reminder while playing)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        MSG
+  end
+
+  def enter_to_continue
+    loop do
+      prompt 'Please press the enter key to continue to the next round...'
+      action = gets
+      break if action == "\n"
+      prompt "Invalid key."
+    end
+    clear_screen
   end
 
 end
@@ -23,7 +36,7 @@ end
 class Move
   attr_reader :name, :beats
   include Comparable
-  VALUES = ["rock", "paper", "scissors", "spock", "lizard"]
+  VALUES = ["rock", "paper", "scissors", "spock", "lizard", "r", "p", "sc", "l", "sp"]
 
   def to_s
     self.name.capitalize
@@ -72,24 +85,22 @@ class Spock < Move
 end
 
 class Player
-  attr_accessor :move, :name, :score, :move_history
+  attr_accessor :move, :name, :score
 
   def initialize
     set_name
     @score = 0
-    @move_history = []
   end
 
   def choose(choice)
     self.move =
       case choice
-      when "rock" then Rock.new
-      when "paper" then Paper.new
-      when "scissors" then Scissors.new
-      when "lizard" then Lizard.new
-      when "spock" then Spock.new
+      when "rock" , "r" then Rock.new
+      when "paper", "p"  then Paper.new
+      when "scissors", "sc"  then Scissors.new
+      when "lizard", "l"  then Lizard.new
+      when "spock", "sp"  then Spock.new
       end
-    self.move_history << choice
   end
 
 end
@@ -110,13 +121,14 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      prompt "Please choose one: rock, paper, scissors, lizard or spock:"
+      prompt "Please choose one: (r)ock, (p)aper, (sc)issors, (l)izard or (sp)ock."
+
       choice = gets.chomp.downcase
       if Move::VALUES.include?(choice)
         break
       elsif choice == "rules"
         clear_screen
-        prompt(rules)
+        display_rules
       else
         prompt "Sorry, invalid choice"
       end
@@ -138,17 +150,21 @@ end
 
 class RPSGame
   include Promptable
-  WINNING_SCORE = 5
-  attr_accessor :human, :computer
+  WINNING_SCORE = 3
+  attr_accessor :human, :computer, :move_history
 
   def initialize
     @human = Human.new
     @computer = Computer.new
+    @move_history = []
   end
 
   def display_welcome_message
-    prompt "Hi #{human.name}! Welcome to Rock, Paper, Scissors, Lizard, Spock!"
-    prompt "First up to #{WINNING_SCORE} wins the game."
+    puts <<~MSG
+                Hi #{human.name}! Welcome to Rock, Paper, Scissors, Lizard, Spock!
+                You are playing against #{computer.name}.
+                First up to #{WINNING_SCORE} wins the game!
+            MSG
   end
 
   def display_goodbye_message
@@ -157,19 +173,20 @@ class RPSGame
 
   def display_moves
     clear_screen
-    prompt "#{human.name} chose #{human.move}."
-    prompt "#{computer.name} chose #{computer.move}."
+    prompt "#{human.name} chose #{human.move} | #{computer.name} chose #{computer.move} <="
     puts "======================================"
   end
 
   def display_winner
     if human.move > computer.move
-      prompt "#{human.move} beats #{computer.move}. #{human.name} won!"
+      result = "#{human.move} beats #{computer.move}. #{human.name} won!"
+
     elsif human.move < computer.move
-      prompt "#{computer.move} beats #{human.move}. #{computer.name} won!"
+      result = "#{computer.move} beats #{human.move}. #{computer.name} won!"
     else
-      prompt "It's a tie!"
+      result =  "You both chose #{human.move}. It's a tie!"
     end
+    self.move_history << result
   end
 
   def update_scores
@@ -220,33 +237,38 @@ class RPSGame
   end
 
   def display_moves_history
-    prompt "Your moves: #{human.move_history}"
-    prompt "#{computer.name}'s moves: #{computer.move_history}"
+    move_history.each_with_index do |result, idx|
+      if idx == move_history.size - 1
+        prompt "Current Round: #{result}"
+      else
+        prompt "Round #{idx + 1}: #{result}"
+      end
+    end
   end
 
-  def reset_moves
-    human.move_history = []
-    computer.move_history = []
+  def reset_move_history
+    self.move_history = []
   end
 
   def play
     clear_screen
     display_welcome_message
-    prompt(rules)
+    display_rules
     loop do
       loop do
         human.choose
         computer.choose
         display_moves
         display_winner
+        display_moves_history
         update_scores
         display_scores
-        display_moves_history
         break if human.score == WINNING_SCORE || computer.score == WINNING_SCORE
+        enter_to_continue
       end
       display_final_winner
       reset_score
-      reset_moves
+      reset_move_history
       break unless play_again?
     end
     display_goodbye_message
