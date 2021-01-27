@@ -1,5 +1,4 @@
 module Promptable
-
   def prompt(message)
     puts "=> #{message}"
   end
@@ -30,22 +29,23 @@ module Promptable
     end
     clear_screen
   end
-
 end
 
 class Move
   attr_reader :name, :beats
+
   include Comparable
-  VALUES = ["rock", "paper", "scissors", "spock", "lizard", "r", "p", "sc", "l", "sp"]
+  VALUES = ["rock", "paper", "scissors", "spock", "lizard",
+            "r", "p", "sc", "l", "sp"]
 
   def to_s
-    self.name.capitalize
+    name.capitalize
   end
 
   def <=>(other_move)
-     return 1 if self.beats.include?(other_move.name)
-     return 0 if name == other_move.name
-     -1
+    return 1 if beats.include?(other_move.name)
+    return 0 if name == other_move.name
+    -1
   end
 end
 
@@ -95,14 +95,13 @@ class Player
   def choose(choice)
     self.move =
       case choice
-      when "rock" , "r" then Rock.new
-      when "paper", "p"  then Paper.new
-      when "scissors", "sc"  then Scissors.new
-      when "lizard", "l"  then Lizard.new
-      when "spock", "sp"  then Spock.new
+      when "rock", "r" then Rock.new
+      when "paper", "p" then Paper.new
+      when "scissors", "sc" then Scissors.new
+      when "lizard", "l" then Lizard.new
+      when "spock", "sp" then Spock.new
       end
   end
-
 end
 
 class Human < Player
@@ -122,12 +121,11 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      prompt "Please choose one: (r)ock, (p)aper, (sc)issors, (l)izard or (sp)ock."
-
+      prompt "Please choose one: (r)ock, (p)aper, (sc)issors," \
+             " (l)izard or (sp)ock."
       choice = gets.chomp.downcase
-      if Move::VALUES.include?(choice)
-        break
-      elsif choice == "rules"
+      break if Move::VALUES.include?(choice)
+      if choice == "rules"
         clear_screen
         display_rules
       else
@@ -140,6 +138,7 @@ end
 
 class Computer < Player
   attr_reader :robot, :model, :strategy
+
   def initialize
     @robot = [R2D2, Hal, Chappie, Bender, XJ9].sample.new
     super
@@ -202,33 +201,35 @@ class RPSGame
   end
 
   def display_welcome_message
+    clear_screen
     puts <<~MSG
                 Hi #{human.name}! Welcome to Rock, Paper, Scissors, Lizard, Spock!
                 You are playing against #{computer.name}.
                 First up to #{WINNING_SCORE} wins the game!
             MSG
+    display_rules
   end
 
   def display_goodbye_message
-    prompt "Thanks for playing Rock, Paper, Scissors, Lizard, Spock. Goodbye #{human.name}!"
+    prompt "Thanks for playing Rock, Paper, Scissors, Lizard, Spock." \
+           " Goodbye #{human.name}!"
   end
 
   def display_moves
     clear_screen
-    prompt "#{human.name} chose #{human.move} | #{computer.name} chose #{computer.move} <="
-    puts "======================================"
+    prompt "#{human.name} chose #{human.move} | " \
+           "#{computer.name} chose #{computer.move} <="
+    puts "===============Game History================="
   end
 
-  def display_winner
+  def round_result
     if human.move > computer.move
-      result = "#{human.move} beats #{computer.move}. #{human.name} won!"
-
+      "#{human.move} beats #{computer.move}. #{human.name} won!"
     elsif human.move < computer.move
-      result = "#{computer.move} beats #{human.move}. #{computer.name} won!"
+      "#{computer.move} beats #{human.move}. #{computer.name} won!"
     else
-      result =  "You both chose #{human.move}. It's a tie!"
+      "You both chose #{human.move}. It's a tie!"
     end
-    self.move_history << result
   end
 
   def update_scores
@@ -252,6 +253,10 @@ class RPSGame
             MSG
   end
 
+  def winner?
+    human.score == WINNING_SCORE || computer.score == WINNING_SCORE
+  end
+
   def display_final_winner
     if human.score == WINNING_SCORE
       prompt "Congrats #{human.name}, you are the grand winner!"
@@ -268,22 +273,18 @@ class RPSGame
       break if ["y", "n"].include?(answer)
       prompt "Sorry, must be y or n."
     end
-
-    if answer.downcase == "n"
-      false
-    elsif answer.downcase == 'y'
-      clear_screen
-      prompt "Who will win this time?"
-      true
-    end
+    clear_screen
+    answer == 'y'
   end
 
   def display_moves_history
+    move_history << round_result
     move_history.each_with_index do |result, idx|
       if idx == move_history.size - 1
-        prompt "Current Round: #{result}"
+        puts "============================================"
+        prompt "Current Round: #{result.upcase} <="
       else
-        prompt "Round #{idx + 1}: #{result}"
+        puts "Round #{idx + 1}: #{result}"
       end
     end
   end
@@ -292,26 +293,28 @@ class RPSGame
     self.move_history = []
   end
 
-  def play
-    clear_screen
-    display_welcome_message
-    display_rules
+  def round_loop
     loop do
-      loop do
-        human.choose
-        computer.choose
-        display_moves
-        display_winner
-        display_moves_history
-        update_scores
-        display_scores
-        break if human.score == WINNING_SCORE || computer.score == WINNING_SCORE
-        enter_to_continue
-      end
+      human.choose
+      computer.choose
+      display_moves
+      display_moves_history
+      update_scores
+      display_scores
+      break if winner?
+      enter_to_continue
+    end
+  end
+
+  def play
+    display_welcome_message
+    loop do
+      round_loop
       display_final_winner
       reset_score
       reset_move_history
       break unless play_again?
+      prompt "Who will win this time?"
     end
     display_goodbye_message
   end
