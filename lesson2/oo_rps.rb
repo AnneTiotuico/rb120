@@ -7,8 +7,8 @@ module Promptable
     system("clear") || system("cls")
   end
 
-  def display_rules
-    puts <<~MSG
+  def rules
+    <<~MSG
         ~~~~~~~~~~~~~~~~~~RULES~~~~~~~~~~~~~~~~~~
         Rock: crushes Lizard and crushes Scissors
         Paper: covers Rock and disproves Spock
@@ -18,6 +18,21 @@ module Promptable
         (Enter: 'rules' if you need a reminder while playing)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         MSG
+  end
+
+  def display_rules
+    clear_screen
+    puts rules
+  end
+
+  def determine_choice
+    prompt "Please choose one: (r)ock, (p)aper, (sc)issors,"\
+             " (l)izard or (sp)ock."
+    gets.chomp.downcase
+  end
+
+  def invalid_choice
+    prompt "Sorry, invalid choice"
   end
 
   def enter_to_continue
@@ -121,16 +136,9 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      prompt "Please choose one: (r)ock, (p)aper, (sc)issors," \
-             " (l)izard or (sp)ock."
-      choice = gets.chomp.downcase
+      choice = determine_choice
       break if Move::VALUES.include?(choice)
-      if choice == "rules"
-        clear_screen
-        display_rules
-      else
-        prompt "Sorry, invalid choice"
-      end
+      choice == "rules" ? display_rules : invalid_choice
     end
     super(choice)
   end
@@ -207,7 +215,7 @@ class RPSGame
                 You are playing against #{computer.name}.
                 First up to #{WINNING_SCORE} wins the game!
             MSG
-    display_rules
+    puts rules
   end
 
   def display_goodbye_message
@@ -222,11 +230,19 @@ class RPSGame
     puts "===============Game History================="
   end
 
+  def display_winner(player)
+    if player.class == Human
+      "#{human.move} beats #{computer.move}. #{human.name} won!"
+    elsif player.class == Computer
+      "#{computer.move} beats #{human.move}. #{computer.name} won!"
+    end
+  end
+
   def round_result
     if human.move > computer.move
-      "#{human.move} beats #{computer.move}. #{human.name} won!"
+      display_winner(human)
     elsif human.move < computer.move
-      "#{computer.move} beats #{human.move}. #{computer.name} won!"
+      display_winner(computer)
     else
       "You both chose #{human.move}. It's a tie!"
     end
