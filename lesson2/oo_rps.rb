@@ -20,17 +20,6 @@ module Promptable
         MSG
   end
 
-  def display_rules
-    clear_screen
-    puts rules
-  end
-
-  def determine_choice
-    prompt "Please choose one: (r)ock, (p)aper, (sc)issors,"\
-             " (l)izard or (sp)ock."
-    gets.chomp.downcase
-  end
-
   def invalid_choice
     prompt "Sorry, invalid choice"
   end
@@ -121,16 +110,23 @@ end
 
 class Human < Player
   include Promptable
+
   def set_name
     name = ""
+    clear_screen
     loop do
-      clear_screen
       prompt "What's your name?"
       name = gets.chomp
-      break unless name.empty?
-      prompt "Sorry, must enter a value."
+      break if name =~ /^[a-z]+$/i
+      prompt "Sorry, must enter a valid name."
     end
     self.name = name
+  end
+
+  def determine_choice
+    prompt "Please choose one: (r)ock, (p)aper, (sc)issors,"\
+             " (l)izard or (sp)ock."
+    gets.chomp.downcase
   end
 
   def choose
@@ -138,7 +134,8 @@ class Human < Player
     loop do
       choice = determine_choice
       break if Move::VALUES.include?(choice)
-      choice == "rules" ? display_rules : invalid_choice
+      clear_screen
+      choice == "rules" ? puts(rules) : invalid_choice
     end
     super(choice)
   end
@@ -199,14 +196,32 @@ end
 
 class RPSGame
   include Promptable
+
   WINNING_SCORE = 3
-  attr_accessor :human, :computer, :move_history
 
   def initialize
     @human = Human.new
     @computer = Computer.new
     @move_history = []
   end
+
+  def play
+    display_welcome_message
+    loop do
+      round_loop
+      display_final_winner
+      reset_score
+      reset_move_history
+      break unless play_again?
+      prompt "Who will win this time?"
+    end
+    display_goodbye_message
+  end
+
+  private
+
+  attr_reader :human, :computer
+  attr_accessor :move_history
 
   def display_welcome_message
     clear_screen
@@ -218,6 +233,19 @@ class RPSGame
     puts rules
   end
 
+  def round_loop
+    loop do
+      human.choose
+      computer.choose
+      display_moves
+      display_moves_history
+      update_scores
+      display_scores
+      break if winner?
+      enter_to_continue
+    end
+  end
+
   def display_goodbye_message
     prompt "Thanks for playing Rock, Paper, Scissors, Lizard, Spock." \
            " Goodbye #{human.name}!"
@@ -227,6 +255,7 @@ class RPSGame
     clear_screen
     prompt "#{human.name} chose #{human.move} | " \
            "#{computer.name} chose #{computer.move} <="
+    return if move_history.empty?
     puts "===============Game History================="
   end
 
@@ -307,32 +336,6 @@ class RPSGame
 
   def reset_move_history
     self.move_history = []
-  end
-
-  def round_loop
-    loop do
-      human.choose
-      computer.choose
-      display_moves
-      display_moves_history
-      update_scores
-      display_scores
-      break if winner?
-      enter_to_continue
-    end
-  end
-
-  def play
-    display_welcome_message
-    loop do
-      round_loop
-      display_final_winner
-      reset_score
-      reset_move_history
-      break unless play_again?
-      prompt "Who will win this time?"
-    end
-    display_goodbye_message
   end
 end
 
