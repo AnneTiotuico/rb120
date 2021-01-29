@@ -39,6 +39,7 @@ class Move
   attr_reader :name, :beats
 
   include Comparable
+
   VALUES = ["rock", "paper", "scissors", "spock", "lizard",
             "r", "p", "sc", "l", "sp"]
 
@@ -89,7 +90,8 @@ class Spock < Move
 end
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_reader :move, :name
+  attr_accessor :score
 
   def initialize
     set_name
@@ -106,10 +108,27 @@ class Player
       when "spock", "sp" then Spock.new
       end
   end
+
+  private
+
+  attr_writer :move, :name
 end
 
 class Human < Player
   include Promptable
+
+  def choose
+    choice = nil
+    loop do
+      choice = determine_choice
+      break if Move::VALUES.include?(choice)
+      clear_screen
+      choice == "rules" ? puts(rules) : invalid_choice
+    end
+    super(choice)
+  end
+
+  private
 
   def set_name
     name = ""
@@ -128,21 +147,10 @@ class Human < Player
              " (l)izard or (sp)ock."
     gets.chomp.downcase
   end
-
-  def choose
-    choice = nil
-    loop do
-      choice = determine_choice
-      break if Move::VALUES.include?(choice)
-      clear_screen
-      choice == "rules" ? puts(rules) : invalid_choice
-    end
-    super(choice)
-  end
 end
 
 class Computer < Player
-  attr_reader :robot, :model, :strategy
+  attr_reader :model, :strategy
 
   def initialize
     @robot = [R2D2, Hal, Chappie, Bender, XJ9].sample.new
@@ -157,6 +165,10 @@ class Computer < Player
     choice = robot.strategy.sample
     super(choice)
   end
+
+  private
+
+  attr_reader :robot
 end
 
 class R2D2 < Computer
